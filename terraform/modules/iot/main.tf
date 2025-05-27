@@ -39,9 +39,9 @@ resource "azurerm_iothub" "main" {
   tags = var.tags
 }
 
-# Storage Account for IoT Hub
+# Storage Account for IoT Hub (with proper naming)
 resource "azurerm_storage_account" "iot" {
-  name                     = "${var.iot_hub_name}storage"
+  name                     = substr(replace(lower("${var.iot_hub_name}st"), "-", ""), 0, 24)
   resource_group_name      = var.resource_group_name
   location                 = var.location
   account_tier             = "Standard"
@@ -82,4 +82,15 @@ resource "azurerm_iothub_consumer_group" "function" {
   iothub_name            = azurerm_iothub.main.name
   eventhub_endpoint_name = "events"
   resource_group_name    = var.resource_group_name
+}
+
+# Shared Access Policy for devices
+resource "azurerm_iothub_shared_access_policy" "device_policy" {
+  name                = "device-policy"
+  resource_group_name = var.resource_group_name
+  iothub_name         = azurerm_iothub.main.name
+
+  registry_read   = true
+  registry_write  = true
+  device_connect  = true
 }
